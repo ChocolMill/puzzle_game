@@ -1,0 +1,429 @@
+package com.heima.ui;
+
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.Random;
+
+public class GameJFrame extends JFrame implements KeyListener, ActionListener {
+    //子类继承JFrame类，作为游戏的主界面，关于游戏的代码可写在此处
+    //分类写代码，思路明确  避免代码集中在同一个类中，过于臃肿
+    //构造函数记得加上public！！！！更何况是不同包的子类中的对象调用构造函数，此情况下，默认权限是会报错的
+
+    int data[][] = new int[4][4];//注意将二维数组放在成员位置！！！因为下列方法会用到
+    int x = 0,y = 0;//记录序号为0的图片的位置
+
+    //定义一个二维数组，储存应该正确完成拼图的数据
+    int [][]win = {
+            {1,2,3,4},
+            {5,6,7,8},
+            {9,10,11,12},
+            {13,14,15,0}
+    };
+
+    //计步变量不要写在方法内，否则方法执行完后计步变量内存空间会被释放
+    int step = 0;
+
+    //由于在actionPerformed()方法与initJMenuBar()方法中要用到条目对象，因此要将创建的条目对象放在成员位置
+    //创建JMenuItem对象
+    JMenuItem rePlayItem = new JMenuItem("重新游戏");
+    JMenuItem reLoginItem = new JMenuItem("重新登陆");
+    JMenuItem existItem = new JMenuItem("退出游戏");
+
+    JMenuItem accountItem = new JMenuItem("微信号");
+
+    JMenuItem vivo50 = new JMenuItem(":)");
+    public GameJFrame() {
+
+        //初始化游戏界面
+        initJFrame();
+        //接下来要初始化菜单
+        initJMenuBar();
+
+        //初始化15张图片位置
+        initData();
+
+        //初始化图片
+        initImage();
+
+
+        this.setVisible(true);//显示窗口的代码必须写在最后一行
+    }
+
+    private void initData(){
+        int[] tempArr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+        Random r = new Random();
+        for (int i = 0; i < tempArr.length; i++) {
+            int index = r.nextInt(tempArr.length);
+            int temp;
+            temp = tempArr[i];
+            tempArr[i] = tempArr[index];
+            tempArr[index] = temp;
+        }
+        for(int i = 0; i < 4; i++){
+            for(int j = 0; j < 4; j++){
+                data[i][j] = tempArr[i * 4 + j];
+                if(data[i][j] == 0){
+                    x = i;
+                    y = j;
+                }
+            }
+        }
+    }
+
+
+    private void initImage() {
+        this.getContentPane().removeAll();
+
+        if(victory()) {
+            JLabel winJLable = new JLabel(new ImageIcon("puzzlegame\\image\\win.png"));
+            winJLable.setBounds(203, 283, 197, 73);
+            this.getContentPane().add(winJLable);
+        }
+
+        //JLabel不仅可以管理图片，还可以管理文字
+        JLabel stepCount = new JLabel("步数：" + step);
+        stepCount.setBounds(50,30,100,20);
+        this.getContentPane().add(stepCount);
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                int number = data[i][j];
+                //创建一个ImageIcon的对象
+                ImageIcon icon = new ImageIcon("puzzlegame\\image\\animal\\animal3\\"+ number +".jpg");
+                //创建一个JLabel的对象(管理容器)，用来管理图片对象icon
+                JLabel jLabel1 = new JLabel(icon);
+                //指定图片位置，坐标是图片的左上顶点
+                jLabel1.setBounds(105 * j + 85, 105 * i + 134, 105, 105);
+                //给图片添加边框
+                jLabel1.setBorder(new BevelBorder(BevelBorder.RAISED));
+                //把管理容器添加到游戏界面当中(将管理容器添加至隐藏容器中)getContentPane()用于获取隐藏容器
+                //隐藏容器无需自己创建，在创建界面对象时JVM已自动创造隐藏容器
+                this.getContentPane().add(jLabel1);
+
+            }
+        }
+
+        ImageIcon bg = new ImageIcon("puzzlegame\\image\\background.png");
+        JLabel background = new JLabel(bg);
+        background.setBounds(40,40,508,560);
+        this.getContentPane().add(background);//this为当前界面的对象
+        //先加载的图片在上方，后加载的图片在下方
+
+        //刷新界面
+        this.getContentPane().repaint();
+    }
+
+    private void initJMenuBar() {
+        //创建一个菜单(JMenuBar)对象
+        JMenuBar jMenuBar = new JMenuBar();
+        //设置菜单的宽高
+        jMenuBar.setSize(514, 20);
+
+        //创建菜单上选项的(JMenu)对象
+        JMenu functionJMenu = new JMenu("功能");
+        JMenu aboutJMenu = new JMenu("关于我们");
+        JMenu topUpJMenu = new JMenu("充值入口");
+
+
+        //把JMenuItem添加到JMenu中
+        functionJMenu.add(rePlayItem);
+        functionJMenu.add(reLoginItem);
+        functionJMenu.add(existItem);
+
+        aboutJMenu.add(accountItem);
+
+        topUpJMenu.add(vivo50);
+
+        //给条目绑定事件
+        rePlayItem.addActionListener(this);
+        reLoginItem.addActionListener(this);
+        existItem.addActionListener(this);
+        accountItem.addActionListener(this);
+        vivo50.addActionListener(this);
+
+        //把JMenu添加到JMenuBar中
+        jMenuBar.add(functionJMenu);
+        jMenuBar.add(aboutJMenu);
+        jMenuBar.add(topUpJMenu);
+
+        //把整个JMenuBar设置到整个界面中
+        this.setJMenuBar(jMenuBar);
+    }
+
+    private void initJFrame() {
+        this.setSize(603, 680);
+
+        //给主界面设置一个标题
+        this.setTitle("拼图游戏单机版 v1.0");
+        //将主界面置顶
+        this.setAlwaysOnTop(true);
+        //将主界面设置到屏幕的正中央
+        this.setLocationRelativeTo(null);
+        //设置关闭模式
+        //该方法参数类型为形参，不同的整形对应了不同的关闭模式，这些关闭模式被定义在了接口WindowConstants当中
+        //EXIT_ON_CLOSE是一个常量，它的值是3，该模式是只要关闭了一个窗口(也就是this所指的窗口)，JVM就停止
+        //因此方法括号内写WindowConstants.EXIT_ON_CLOSE于括号内写3等同
+        //由于三个窗口不应该同时出现，所以理应在每个窗口中都调用该方法
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        //取消默认居中放置，只有取消了，隐藏容器才能按照xy轴添加组件
+        setLayout(null);
+        //给整个界面添加键盘监听事件
+        this.addKeyListener(this);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    //按下不松时调用的方法
+    //按着a不松时将原图片显示出来
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int code = e.getKeyCode();
+        if(code == 65){
+            //把界面中的所有图片删除
+            this.getContentPane().removeAll();
+            //加载完整图片
+            ImageIcon original = new ImageIcon("C:\\Users\\Begula\\IdeaProjects\\base-code\\puzzlegame\\image\\animal\\animal3\\all.jpg");
+            JLabel all = new JLabel(original);
+            all.setBounds(85,134,420,420);
+            this.getContentPane().add(all);
+            //加载背景图片
+            ImageIcon bg = new ImageIcon("puzzlegame\\image\\background.png");
+            JLabel background = new JLabel(bg);
+            background.setBounds(40,40,508,560);
+            this.getContentPane().add(background);
+            //刷新界面
+            this.getContentPane().repaint();
+        }
+
+    }
+
+    //按下松开时调用的方法
+    @Override
+    public void keyReleased(KeyEvent e) {
+        //判断游戏是否胜利，如果胜利，此方法需要直接结束，不执行下面的代码
+        if(victory()){
+            return;
+        }
+        int code = e.getKeyCode();
+        if(code == 37){
+            //向左移动
+            if(y == 3){
+                return;//表示白方块已经在最右侧了，右侧已经没有图片可以向左移动
+            }
+            int temp = data[x][y];
+            data[x][y] = data[x][y + 1];
+            data[x][y + 1] = temp;
+            y++;
+            //每移动一次，计数器自增一次
+            step++;
+            initImage();
+        }else if(code == 38){
+            //向上移动
+            if(x == 3){
+                return;//表示白方块已经在最下面了，下面已经没有图片可以向上移动
+            }
+            int temp = data[x][y];
+            data[x][y] = data[x + 1][y];
+            data[x + 1][y] = temp;
+            x++;//注意x++，因为图片向上移时，空白图片向下移，纵坐标+1
+            //每移动一次，计数器自增一次
+            step++;
+            initImage();
+        }
+        else if(code == 39){
+            //向右移动
+            if(y == 0){
+                return;//表示白方块已经在最左侧了，左侧已经没有图片可以向右移动
+            }
+            int temp = data[x][y];
+            data[x][y] = data[x][y - 1];
+            data[x][y - 1] = temp;
+            y--;
+            //每移动一次，计数器自增一次
+            step++;
+            initImage();
+        }
+        else if(code == 40){
+            //向下移动
+            if(x == 0){
+                return;//表示白方块已经在最上面了，上面已经没有图片可以向下移动
+            }
+            int temp = data[x][y];
+            data[x][y] = data[x - 1][y];
+            data[x - 1][y] = temp;
+            x--;//注意x--，因为图片向下移时，空白图片向上移，纵坐标-1
+            //每移动一次，计数器自增一次
+            step++;
+            initImage();
+        }
+        //松开a键后，恢复为原来的打乱顺序
+        else if(code == 65){
+            initImage();
+        }
+        else if(code == 87){
+            data = new int[][]{
+                {1,2,3,4},
+                {5,6,7,8},
+                {9,10,11,12},
+                {13,14,15,0}
+            };
+            initImage();
+        }
+
+    }
+
+    public boolean victory(){
+        for (int i = 0; i < 4; i++) {
+            for(int j = 0; j < 4; j++){
+                if(win[i][j] != data[i][j]){
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        //获取当前被点击的条目对象
+        Object obj = e.getSource();
+        if(obj == rePlayItem){
+            System.out.println("重新游戏");
+            //计数器清零，要放在initImage()方法前，否则还会显示重新游戏钱的步数，因为在该方法中已经加载了步数
+            step = 0;
+            //再次打乱数据
+            initData();
+            //重新加载图片
+            initImage();
+        }
+        else if(obj == reLoginItem){
+            System.out.println("重新登录");
+            //关闭当前游戏界面
+            this.setVisible(false);
+            //打开登录界面
+            new LoginJFrame();
+        }
+        else if(obj == existItem){
+            System.out.println("退出游戏");
+            //直接关闭JVM
+            System.exit(0);
+        }
+        else if(obj == accountItem){
+            System.out.println("微信号");
+            //创建一个弹框对象
+            JDialog jDialog = new JDialog();
+            //创建一个管理图片容器的对象
+            JLabel jLabel = new JLabel(new ImageIcon("puzzlegame\\about1.jpg"));
+            //位置是相对于弹框而言的
+            jLabel.setBounds(0,0,420,670);
+            //将图片添加到弹框中
+            jDialog.getContentPane().add(jLabel);
+            //给弹框设置大小
+            jDialog.setSize(420,670);
+            //让弹框制定
+            jDialog.setAlwaysOnTop(true);
+            //让弹框居中
+            jDialog.setLocationRelativeTo(null);
+            //让弹框不关闭接无法操作下面的界面
+            jDialog.setModal(true);
+            //让弹框显示出来
+            jDialog.setVisible(true);
+        }
+        else if(obj == vivo50){
+            System.out.println("vivo50");
+        }
+
+    }
+}
+
+
+
+package com.heima.ui;
+
+import javax.swing.*;
+
+public class LoginJFrame extends JFrame {
+    public LoginJFrame(){
+        this.setSize(488,500);
+
+        //给界面设置一个标题
+        this.setTitle("拼图游戏登录界面");
+        //将主界面置顶
+        this.setAlwaysOnTop(true);
+        //将主界面设置到屏幕的正中央
+        this.setLocationRelativeTo(null);
+
+        //由于三个窗口不应该同时出现，所以理应在每个窗口中都调用该方法
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        this.setVisible(true);//显示窗口的代码必须写在最后一行
+    }
+}
+
+
+
+package com.heima.ui;
+
+import javax.swing.*;
+
+public class RegisterJFrame extends JFrame {
+    public RegisterJFrame(){
+        this.setSize(488,430);
+
+        //给界面设置一个标题
+        this.setTitle("拼图游戏注册界面");
+        //将主界面置顶
+        this.setAlwaysOnTop(true);
+        //将主界面设置到屏幕的正中央
+        this.setLocationRelativeTo(null);
+
+        //由于三个窗口不应该同时出现，所以理应在每个窗口中都调用该方法
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        this.setVisible(true);//显示窗口的代码必须写在最后一行
+    }
+
+}
+
+
+package com.heima.ui;
+
+import javax.swing.*;
+
+public class Test {
+    public static void main(String[] args) {
+        //创建一个游戏主界面
+        //JFrame属于JavaBean类
+        JFrame gameJFrame = new JFrame();
+        gameJFrame.setSize(603,680);
+        gameJFrame.setVisible(true);
+
+        //创建一个登录界面
+        JFrame loginJFrame = new JFrame();
+        loginJFrame.setSize(488,430);
+        loginJFrame.setVisible(true);
+
+        //创建一个注册界面
+        JFrame registerJFrame = new JFrame();
+        registerJFrame.setSize(488,500);
+        registerJFrame.setVisible(true);
+    }
+}
+
+import com.heima.ui.GameJFrame;
+
+public class APP {
+    public static void main(String[] args) {
+        //创建对象 通过空参构造函数初始化界面相关数据
+        //new RegisterJFrame();
+        //new LoginJFrame();
+        new GameJFrame();
+    }
+}
